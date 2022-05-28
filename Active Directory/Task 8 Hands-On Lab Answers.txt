@@ -1,0 +1,12 @@
+1. What is the name of the Windows 10 operating system?
+ - Command: Get-NetComputer -fulldata | select operatingsystem
+ - Answer: Windows 10 Enterprise Evaluation
+2. What is the second "Admin" name?
+ - Command: Get-NetUser | select cn
+ - Answer: Admin2
+3. Which group has a capital "V" in the group name?
+ - Command: Get-NetGroup | Select-String -CaseSensitive "V"
+ - Answer: Hyper-V Administrators
+4. When was the password last set for the SQLService user?
+ - Command: Get-NetUser -UserName "SQLService" | select pwdlastset
+ - Answer: 5/13/2020 8:26:58 PM

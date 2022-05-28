@@ -1,0 +1,97 @@
+Windows core processes
+https://tryhackme.com/room/btwindowsinternals
+
+1. System
+ - C:\Windows\system32\Ntoskrnl.exe (but could be another loaded device driver)
+ - A system thread that exists in OS-reserved memory space.
+ - Runs only in kernel mode
+ - PID 4 always
+ - User account is NT AUTHORITY\SYSTEM (aka Local System)
+ - Has no parent process
+ - 1 instance only
+ - Starts at computer boot time
+ - Runs in System Idle Process (0). The 0 indicates Session 0.
+ 
+2. Session Manager Subsystem
+ - C:\Windows\system32\smss.exe
+ - Responsible for creating new sessions
+ - Is the first user-mode process started by the kernel.
+ - Starts the kernel mode and user mode of the Windows subsystem (win32k.sys kernel mode, winsrv.dll user mode, csrss.exe user mode).
+   - Starts wininit.exe and csrss.exe in Session 0, and winlogon.exe and csrss.exe in Session 1.
+ - Also responsible for creating environment variables, virtual memory paging files and starts winlogon.exe.
+ - Parent process smss.exe PID 4
+ - Only 1 running process
+ - User is SYSTEM
+ 
+3. Client Server Runtime Process
+ - C:\Windows\system32\csrss.exe
+ - User-mode side of the Windows subsystem
+ - Responsible for the Win32 console window, process thread creation/deletion, making Windows API available to other processes, mapping drive letters, and handling Windows shutdown process.
+ - For each instance, csrsrv.dll, basesrv.dll, and winsrv.dll are loaded (along with others)
+ - Runs in Session 0 and 1
+ - Parent process "Non-existent process ($PID$)" due to smss.exe self-terminating after child process creation.
+ - 2+ running instances
+ - User is SYSTEM
+
+4. Windows Initialization Process
+ - C:\Windows\system32\wininit.exe
+ - Responsible for launching services.exe, lsass.exe, and lsaiso.exe (if Credential Guard is enabled) with Session 0.
+ - Parent process "Non-existent process ($PID$)"
+ - 1 running instance
+ - User is SYSTEM
+ 
+5. Service Control Manager
+ - C:\Windows\system32\services.exe
+ - Responsible to handle system services: loading services, interacting with services, starting/ending services, etc.
+ - Maintains database that can be queried with sc.exe.
+ - Information regarding services is stored in the registry HKLM\System\CurrentControlSet\Services
+ - Child processes: svchost.exe, spoolsv.exe, msmpeng.exe, dllhost.exe, and more.
+ - Parent process wininit.exe
+ - Session 0
+ - 1 running instance
+ - User is SYSTEM
+
+6. Service Host
+ - C:\Windows\system32\svchost.exe
+ - Responsible for hosting and managing Windows services. Services running in this process are implemented as DLLs.
+ - Malware will masquerade as this process or get it to install/call a malicious DLL.
+ - Parent process services.exe
+ - Has many instances, normally of command line form "\C:\Windows\System32\svchost.exe -k <DLL name> [OPTIONS]"
+   - The -k option should always be present.
+ - User varies (e.g. SYSTEM, Network Service, Local Service, the logged in user)
+
+7. Local Security Authority Subsystem Service
+ - C:\Windows\System32\lsass.exe
+ - Responsible for enforcing the security policy.
+ - Uses authentication packages specified in HKLM\System\CurrentControlSet\Control\Lsa.
+ - Parent process wininit.exe
+ - 1 running instance
+ - User is SYSTEM
+
+8. Windows Logon
+ - C:\Windows\System32\winlogon.exe
+ - Responsible for handling the Secure Attention Sequence (SAS) i.e. CTRL+ALT+DELETE key combination for entering username & password.
+ - Also responsible for locking screen, running screensaver, and loading the user profile by loading the user's NTUSER.DAT into HKCU. Userinit.exe loads the user's shell.
+ - Parent process "Non-existent process ($PID$)"
+ - 1+ running instance (additional instances occur as new user sessions are created)
+ - Session 1
+ - Only 1 shell value in the registry: explorer.exe
+
+9. Windows Explorer
+ - C:\Windows\explorer.exe
+ - Gives the user access to their folders and files, and functionality to other features such as Start Menu and Taskbar.
+ - Userinit.exe exits after spawning explorer.exe.
+ - Parent process "Non-existent process ($PID$)"
+ - 1 session for each interactively logged-in user
+ - User is the logged-in userhttps://tryhackme.com/room/btwindowsinternals
+ - Outbound TCP/IP connections would be unusual
+ 
+Processes unique to Windows 10 not detailed here:
+runtimebroker.exe
+taskhostw.exe (formerly taskhost.exe and taskhostex.exe)
+
+
+Credits:
+https://www.threathunting.se/tag/windows-process/
+https://www.sans.org/security-resources/posters/hunt-evil/165/download
+https://docs.microsoft.com/en-us/sysinternals/resources/windows-internals
